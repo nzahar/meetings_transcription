@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  meeting_transcription_bot:
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+    image: docker.direct.farm/meeting_transcription_bot:latest
+    container_name: meeting_transcription_bot
+    restart: unless-stopped

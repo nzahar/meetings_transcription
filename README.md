@@ -1,2 +1,1 @@
-# meetings_transcription
-A tool for meetings transcription
+# Транскрибация аудио и составление протокола встречи. 
