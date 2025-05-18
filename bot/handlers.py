@@ -9,10 +9,9 @@ import logging
 import text
 import config
 import utils
-from database import is_user_rate_limited, log_request, cleanup_old_logs
+from shared.database import is_user_rate_limited, log_request, cleanup_old_logs
 
 router = Router()
-#semaphore = asyncio.Semaphore(1)
 
 @router.message(Command("start"))
 async def start_handler(msg: AMessage):

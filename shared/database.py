@@ -1,5 +1,5 @@
 from peewee import *
-import config
+from bot import config
 import datetime
 
 db = SqliteDatabase(config.db_file)

@@ -5,8 +5,8 @@ import os
 import sys
 import logging
 
-import database
-import config
+from shared import database
+from bot import config
 import aiohttp
 from aiogram import Bot, \
     Dispatcher
@@ -15,10 +15,10 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.utils.chat_action import ChatActionMiddleware
 
-from handlers.handlers import router
-from kb.kb import set_commands
+from bot.handlers import router
+from bot.kb import set_commands
 
-#logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="w")
+
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()

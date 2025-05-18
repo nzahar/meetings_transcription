@@ -10,12 +10,12 @@ from datetime import datetime
 
 from aiogram.exceptions import TelegramBadRequest
 
-import config
 import textwrap
 from typing import Union
-import database
+from shared import database
+from bot import config
 import text
-from config import MessageType
+from bot.config import MessageType
 
 
 def register_user(user_id: int, user_name: str) -> Union[bool, str]:
@@ -62,6 +62,7 @@ async def process_audio(message: AMessage, file_id: str, mime_type: str):
 
         asyncio.create_task(read_audio(message.from_user.id, reply_message_id, audio_bytes,
                                              mime_type))
+        return None
     except Exception as ex:
         sys.stdout.flush()
         await message.answer(f"Your message caused an error: {ex}")
