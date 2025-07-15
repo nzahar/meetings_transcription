@@ -1,5 +1,0 @@
-dotenv
-aiohttp
-aiogram
-peewee
-ComradeAI
