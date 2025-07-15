@@ -1,15 +1,11 @@
-FROM python:3.11-slim
-
-RUN apt-get update && apt-get install -y \
-    curl build-essential ffmpeg && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+FROM golang:1.22-alpine
 
 WORKDIR /app
 
-COPY worker/requirements.txt /app/worker/requirements.txt
-RUN pip install --no-cache-dir -r /app/worker/requirements.txt
+COPY worker/ ./worker/
+WORKDIR /app/worker
 
-COPY worker/ /app/worker/
-COPY shared/ /app/shared/
+RUN go mod download
+RUN go build -o worker .
 
-CMD ["python", "worker/main.py"]
+CMD ["./worker"]

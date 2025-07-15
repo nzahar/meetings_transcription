@@ -1,3 +1,48 @@
+# 📦 Go build artifacts
+**/bin/
+**/build/
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/main
 
-.idea
-/.env
+# 🧠 GoLand
+.idea/
+*.iml
+
+# 🧪 Go test cache & coverage
+**/coverage.out
+
+# 📁 Go modules' vendor (если используешь go mod vendor)
+**/vendor/
+
+# 🚫 OS junk
+.DS_Store
+Thumbs.db
+
+# 🔐 Env files
+.env
+.env.*
+
+# 🐳 Docker artifacts
+**/*.log
+**/*.pid
+**/*.sock
+
+# ⛴️ Docker volumes / mounted dirs (если используются)
+volumes/
+tmp/
+data/
+
+# 📦 Node or Python cache (на всякий случай)
+__pycache__/
+*.pyc
+node_modules/
+
+# ⚙️ Editor backups
+*~
+*.swp
+*.swo
