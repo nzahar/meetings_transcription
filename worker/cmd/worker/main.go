@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"github.com/nzahar/meetings_transcription/worker/config"
 	"github.com/nzahar/meetings_transcription/worker/internal/handler"
+	"github.com/nzahar/meetings_transcription/worker/internal/service"
 	"github.com/nzahar/meetings_transcription/worker/internal/storage"
 	"log"
 	"net/http"
@@ -17,8 +19,15 @@ func main() {
 	}
 	defer db.Close()
 
-	h := handler.New(db, cfg.AgentURL)
+	go func() {
+		p := &service.Poller{
+			DB: db,
+		}
+		ctx := context.Background()
+		p.Start(ctx)
+	}()
 
+	h := handler.New(db, cfg.AgentURL)
 	http.HandleFunc("/transcribe", h.HandleTranscriptionRequest)
 
 	log.Printf("Listening on %s...", cfg.ListenAddr)

@@ -2,11 +2,20 @@ package storage
 
 import (
 	"database/sql"
-	"github.com/nzahar/meetings_transcription/worker/internal/model"
+	"encoding/json"
 	"time"
 
 	_ "github.com/lib/pq"
 )
+
+type Meeting struct {
+	ID            int64
+	AudioURL      string
+	Status        string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	TranscriberID string
+}
 
 type Storage struct {
 	db *sql.DB
@@ -24,7 +33,7 @@ func (s *Storage) Close() error {
 	return s.db.Close()
 }
 
-func (s *Storage) CreateMeeting(audioURL string, transcriber_id string) (*model.Meeting, error) {
+func (s *Storage) CreateMeeting(audioURL string, transcriber_id string) (*Meeting, error) {
 	var id int64
 	created_at := time.Now()
 	err := s.db.QueryRow(`
@@ -36,11 +45,49 @@ func (s *Storage) CreateMeeting(audioURL string, transcriber_id string) (*model.
 		return nil, err
 	}
 
-	return &model.Meeting{
+	return &Meeting{
 		ID:            id,
 		AudioURL:      audioURL,
 		Status:        "processing",
 		CreatedAt:     created_at,
 		TranscriberID: transcriber_id,
 	}, nil
+}
+
+func (s *Storage) GetProcessingMeetings() ([]Meeting, error) {
+	rows, err := s.db.Query(`
+        SELECT id, audio_url, status, created_at, updated_at, transcriber_id
+        FROM meetings
+        WHERE status = 'processing'
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var meetings []Meeting
+	for rows.Next() {
+		var m Meeting
+		err := rows.Scan(&m.ID, &m.AudioURL, &m.Status, &m.CreatedAt, &m.UpdatedAt, &m.TranscriberID)
+		if err != nil {
+			return nil, err
+		}
+		meetings = append(meetings, m)
+	}
+	return meetings, nil
+}
+
+func (s *Storage) UpdateMeetingStatusAndResult(id int64, status string, result map[string]interface{}) error {
+	resultJSON, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`
+        UPDATE meetings
+        SET status = $1,
+            transcription_result = $2,
+            updated_at = now()
+        WHERE id = $3
+    `, status, resultJSON, id)
+	return err
 }
