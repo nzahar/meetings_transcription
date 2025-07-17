@@ -32,7 +32,7 @@ func (h *Handler) HandleTranscriptionRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	res_id, err := service.SendToAgent(h.agentURL, req.AudioURL)
+	res_id, err := service.SendToTranscribeAgent(h.agentURL, req.AudioURL)
 	if err != nil {
 		http.Error(w, "failed to send to agent", http.StatusBadGateway)
 		return

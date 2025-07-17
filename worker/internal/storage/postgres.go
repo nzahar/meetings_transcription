@@ -9,12 +9,14 @@ import (
 )
 
 type Meeting struct {
-	ID            int64
-	AudioURL      string
-	Status        string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	TranscriberID string
+	ID                  int64
+	AudioURL            string
+	Status              string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	TranscriberID       string
+	TranscriptionResult json.RawMessage
+	BeautifulResult     string
 }
 
 type Storage struct {
@@ -77,7 +79,7 @@ func (s *Storage) GetProcessingMeetings() ([]Meeting, error) {
 	return meetings, nil
 }
 
-func (s *Storage) UpdateMeetingStatusAndResult(id int64, status string, result map[string]interface{}) error {
+func (s *Storage) UpdateMeetingStatusAndResult(id int64, status string, result map[string]interface{}, beautifulText string) error {
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		return err
@@ -86,8 +88,9 @@ func (s *Storage) UpdateMeetingStatusAndResult(id int64, status string, result m
         UPDATE meetings
         SET status = $1,
             transcription_result = $2,
-            updated_at = now()
-        WHERE id = $3
-    `, status, resultJSON, id)
+            updated_at = now(),
+            beautiful_result = $3
+        WHERE id = $4
+    `, status, resultJSON, beautifulText, id)
 	return err
 }
