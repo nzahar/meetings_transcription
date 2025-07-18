@@ -17,6 +17,7 @@ type Meeting struct {
 	TranscriberID       string
 	TranscriptionResult json.RawMessage
 	BeautifulResult     string
+	MessageID           string
 }
 
 type Storage struct {
@@ -35,14 +36,14 @@ func (s *Storage) Close() error {
 	return s.db.Close()
 }
 
-func (s *Storage) CreateMeeting(audioURL string, transcriber_id string) (*Meeting, error) {
+func (s *Storage) CreateMeeting(audioURL string, transcriber_id string, message_id string) (*Meeting, error) {
 	var id int64
 	created_at := time.Now()
 	err := s.db.QueryRow(`
-		INSERT INTO meetings (audio_url, status, created_at, transcriber_id)
-		VALUES ($1, 'processing', $2, $3)
+		INSERT INTO meetings (audio_url, status, created_at, transcriber_id, message_id)
+		VALUES ($1, 'processing', $2, $3, $4)
 		RETURNING id
-	`, audioURL, created_at, transcriber_id).Scan(&id)
+	`, audioURL, created_at, transcriber_id, message_id).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
