@@ -20,6 +20,7 @@ services:
     build:
       context: ..
       dockerfile: docker/bot.Dockerfile
+    image: docker.direct.farm/transcriber-bot:latest
     container_name: transcriber-bot
     restart: unless-stopped
     depends_on:
@@ -31,6 +32,7 @@ services:
     build:
       context: ..
       dockerfile: docker/worker.Dockerfile
+    image: docker.direct.farm/transcriber-worker:latest
     container_name: transcriber-worker
     restart: unless-stopped
     depends_on:

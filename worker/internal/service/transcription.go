@@ -5,11 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/nzahar/meetings_transcription/shared"
 	"github.com/nzahar/meetings_transcription/worker/config"
 	"github.com/nzahar/meetings_transcription/worker/internal/storage"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -91,17 +94,50 @@ func (p *Poller) pollPendingTranscriptions() {
 		beautifulText := ""
 		if status == "completed" {
 			utterancesRaw := result["utterances"]
-			utterancesJSON, err := json.Marshal(utterancesRaw)
+			cleanedUtterances, err := cleanUtterances(utterancesRaw)
+			if err != nil {
+				fmt.Println("Ошибка:", err)
+				return
+			}
+
+			utterancesJSON, err := json.Marshal(cleanedUtterances)
 			if err != nil {
 				log.Printf("failed to marshal utterances: %w", err)
 			}
 
-			// Вызываем вашу функцию
 			beautifulText, err = SummarizeMeeting(utterancesJSON)
 			if err != nil {
 				log.Printf("failed to make text beautiful: %w", err)
 				return
 			}
+
+			result := shared.WorkerResult{
+				ChatID:     m.ChatID,
+				MessageID:  m.MessageID,
+				Transcript: string(utterancesJSON),
+				Protocol:   beautifulText,
+			}
+			if err := sendResultToBot(result); err != nil {
+				log.Printf("Error sendint result to the bot: %v", err)
+			}
+
+		}
+
+		if status == "error" {
+			resultJSON, err := json.Marshal(result)
+			if err != nil {
+				log.Printf("failed to marshal result: %w", err)
+			}
+			failResult := shared.WorkerResult{
+				ChatID:     m.ChatID,
+				MessageID:  m.MessageID,
+				Transcript: string(resultJSON),
+				Protocol:   "",
+			}
+			if err := sendResultToBot(failResult); err != nil {
+				log.Printf("Error sending error to the bot: %v", err)
+			}
+
 		}
 
 		if status == "completed" || status == "error" {
@@ -227,4 +263,53 @@ func SummarizeMeeting(input json.RawMessage) (string, error) {
 	log.Printf("The answer is ready")
 
 	return response.Choices[0].Message.Content, nil
+}
+
+func sendResultToBot(result shared.WorkerResult) error {
+	botURL := os.Getenv("BOT_URL")
+	if botURL == "" {
+		return fmt.Errorf("BOT_URL не задан")
+	}
+
+	payload, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(botURL+"/worker_result", "application/json", strings.NewReader(string(payload)))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("бот ответил статусом %d", resp.StatusCode)
+	}
+	return nil
+}
+
+type Utterance struct {
+	Speaker string `json:"speaker"`
+	Text    string `json:"text"`
+}
+
+func cleanUtterances(utterancesRaw interface{}) ([]Utterance, error) {
+	var cleaned []Utterance
+
+	rawList, ok := utterancesRaw.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("utterancesRaw не является []interface{}, а %T", utterancesRaw)
+	}
+
+	for _, item := range rawList {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		speaker, _ := m["speaker"].(string)
+		text, _ := m["text"].(string)
+		cleaned = append(cleaned, Utterance{
+			Speaker: speaker,
+			Text:    text,
+		})
+	}
+	return cleaned, nil
 }

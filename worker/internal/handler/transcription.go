@@ -18,7 +18,8 @@ func New(storage *storage.Storage, agentURL string) *Handler {
 
 type transcriptionRequest struct {
 	AudioURL  string `json:"audio_url"`
-	MessageID string `json:"message_id"`
+	MessageID int    `json:"message_id"`
+	ChatID    int64  `json:"chat_id"`
 }
 
 func (h *Handler) HandleTranscriptionRequest(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +40,7 @@ func (h *Handler) HandleTranscriptionRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	meeting, err := h.storage.CreateMeeting(req.AudioURL, res_id, req.MessageID)
+	meeting, err := h.storage.CreateMeeting(req.AudioURL, res_id, req.MessageID, req.ChatID)
 	if err != nil {
 		http.Error(w, "failed to create meeting", http.StatusInternalServerError)
 		return
